@@ -29,6 +29,8 @@ export function setupAuth(app: Express) {
     checkPeriod: 86400000 // prune expired entries every 24h
   });
 
+  const isProduction = process.env.NODE_ENV === 'production';
+  
   const sessionSettings: session.SessionOptions = {
     secret: process.env.SESSION_SECRET || "supermarket-stock-manager-secret",
     resave: false,
@@ -37,8 +39,10 @@ export function setupAuth(app: Express) {
     cookie: {
       maxAge: 24 * 60 * 60 * 1000, // 24 hours
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
+      secure: isProduction,
+      sameSite: isProduction ? 'none' : 'lax',
+      // Vercel deployment requires specific domain settings
+      domain: process.env.VERCEL_URL ? '.vercel.app' : undefined
     }
   };
 

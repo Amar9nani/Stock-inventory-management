@@ -25,8 +25,8 @@ const getApiUrl = (endpoint: string): string => {
     return endpoint;
   }
   
-  // In production (like Vercel), use the relative URL directly
-  // The Vercel config handles routing both API and frontend from the same domain
+  // For Vercel production, we can use relative URLs as routes are handled by Vercel's rewrites
+  // as defined in vercel.json. This works across domains and environments.
   return endpoint;
 };
 

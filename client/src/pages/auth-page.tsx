@@ -135,12 +135,6 @@ export default function AuthPage() {
                         "Login"
                       )}
                     </Button>
-                    
-                    <div className="text-xs text-muted-foreground mt-2 p-2 border rounded bg-slate-50">
-                      <p className="font-medium">Admin credentials:</p>
-                      <p>Username: <span className="font-medium">Amarnadh</span></p>
-                      <p>Password: <span className="font-medium">Amar.nadi@2004</span></p>
-                    </div>
                   </form>
                 </Form>
               </TabsContent>

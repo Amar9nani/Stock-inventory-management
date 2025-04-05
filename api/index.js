@@ -9,7 +9,10 @@ const { json, urlencoded } = require('body-parser');
 const app = express();
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: process.env.VERCEL_URL ? [process.env.VERCEL_URL, 'https://' + process.env.VERCEL_URL] : '*',
+  credentials: true
+}));
 app.use(json());
 app.use(urlencoded({ extended: true }));
 

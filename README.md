@@ -143,14 +143,31 @@ The application is fully responsive with adaptive layouts for:
 
 ## Deployment
 
-### Frontend (Vercel)
+### Full-Stack Deployment to Vercel
+1. Create a Vercel account at [vercel.com](https://vercel.com)
+2. Connect your GitHub repository
+3. Configure environment variables:
+   - SESSION_SECRET=your-secure-session-secret
+   - NODE_ENV=production
+4. Configure project settings:
+   - In the Vercel dashboard, select your project
+   - Go to Settings → General → Build & Development Settings
+   - Set Framework Preset to "Vite"
+   - Build Command: `npm run build`
+   - Output Directory: `client/dist`
+5. Deploy the project
+6. Once deployed, Vercel will provide a production URL that hosts both your frontend and API
+
+### Alternative: Split Deployment
+
+#### Frontend (Vercel)
 1. Create a Vercel account at [vercel.com](https://vercel.com)
 2. Connect your GitHub repository
 3. Configure environment variables:
    - VITE_API_URL=https://your-backend-url.com/api
 4. Deploy the project
 
-### Backend (Render)
+#### Backend (Render)
 1. Create a Render account at [render.com](https://render.com)
 2. Create a new Web Service
 3. Connect your GitHub repository
@@ -158,7 +175,13 @@ The application is fully responsive with adaptive layouts for:
    - NODE_ENV=production
    - SESSION_SECRET=your-secret-key
    - PORT=5000
+   - CORS_ORIGIN=https://your-frontend-vercel-url.vercel.app
 5. Deploy the service
+
+### Important Deployment Notes
+- The project includes a `vercel.json` configuration file that sets up routing for the combined frontend/backend deployment
+- For Vercel deployment, cookies and authentication are configured to work across serverless functions
+- CORS settings are automatically configured to work with Vercel's domain structure
 
 ## Contact
 
