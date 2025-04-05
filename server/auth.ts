@@ -72,7 +72,7 @@ export function setupAuth(app: Express) {
   (async () => {
     const adminUser = await storage.getUserByUsername("Amarnadh");
     if (!adminUser) {
-      const hashedPassword = await hashPassword("Amar.nani@2004");
+      const hashedPassword = await hashPassword("Amar.nadi@2004");
       await storage.createUser({
         username: "Amarnadh",
         password: hashedPassword,
