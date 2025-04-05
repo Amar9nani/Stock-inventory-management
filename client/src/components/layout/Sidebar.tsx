@@ -1,5 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/use-auth";
+import { UserRole } from "@shared/schema";
 
 interface SidebarProps {
   open: boolean;
@@ -8,14 +10,25 @@ interface SidebarProps {
 
 export default function Sidebar({ open, setOpen }: SidebarProps) {
   const [location] = useLocation();
-
-  const navigation = [
+  const { user, logoutMutation } = useAuth();
+  
+  // Base navigation items for all authenticated users
+  const baseNavigation = [
     { name: "Dashboard", href: "/", icon: "dashboard" },
     { name: "Products", href: "/products", icon: "inventory" },
     { name: "Analytics", href: "/analytics", icon: "assessment" },
     { name: "Transactions", href: "/transactions", icon: "history" },
-    { name: "Settings", href: "/settings", icon: "settings" },
   ];
+  
+  // Additional admin-only navigation items
+  const adminNavigation = [
+    { name: "Users", href: "/users", icon: "people" }
+  ];
+  
+  // Combine navigation items based on user role
+  const navigation = user?.role === UserRole.ADMIN
+    ? [...baseNavigation, ...adminNavigation]
+    : baseNavigation;
 
   const isActiveRoute = (path: string) => {
     return location === path;
@@ -63,7 +76,16 @@ export default function Sidebar({ open, setOpen }: SidebarProps) {
         </nav>
 
         <div className="p-4 border-t border-sidebar-border">
-          <button className="flex items-center text-sm w-full hover:bg-sidebar-accent px-4 py-2 rounded">
+          <button 
+            className="flex items-center text-sm w-full hover:bg-sidebar-accent px-4 py-2 rounded"
+            onClick={() => {
+              logoutMutation.mutate(undefined, {
+                onSuccess: () => {
+                  window.location.href = '/auth';
+                }
+              });
+            }}
+          >
             <span className="material-icons mr-3">exit_to_app</span>
             Logout
           </button>

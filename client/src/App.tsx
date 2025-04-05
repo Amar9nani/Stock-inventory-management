@@ -6,6 +6,8 @@ import NotFound from "@/pages/not-found";
 import Dashboard from "@/pages/Dashboard";
 import Products from "@/pages/Products";
 import Analytics from "@/pages/Analytics";
+import Users from "@/pages/Users";
+import Transactions from "@/pages/Transactions";
 import AuthPage from "@/pages/auth-page";
 import Sidebar from "@/components/layout/Sidebar";
 import Header from "@/components/layout/Header";
@@ -45,6 +47,16 @@ function Router() {
       <ProtectedRoute path="/analytics" component={() => (
         <AppLayout>
           <Analytics />
+        </AppLayout>
+      )} />
+      <ProtectedRoute path="/users" component={() => (
+        <AppLayout>
+          <Users />
+        </AppLayout>
+      )} />
+      <ProtectedRoute path="/transactions" component={() => (
+        <AppLayout>
+          <Transactions />
         </AppLayout>
       )} />
       <Route path="/auth" component={AuthPage} />

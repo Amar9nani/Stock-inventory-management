@@ -129,6 +129,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(500).json({ message: "Failed to create transaction" });
     }
   });
+  
+  // Get all transactions - requires authentication
+  apiRouter.get("/transactions", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const transactions = await storage.getAllTransactions();
+      return res.json(transactions);
+    } catch (error) {
+      console.error("Error fetching transactions:", error);
+      return res.status(500).json({ message: "Failed to fetch transactions" });
+    }
+  });
 
   // Stock overview route - requires authentication
   apiRouter.get("/stock", isAuthenticated, async (req: Request, res: Response) => {
@@ -193,6 +204,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching top products:", error);
       return res.status(500).json({ message: "Failed to fetch top products" });
+    }
+  });
+
+  // User management routes - admin only
+  apiRouter.get("/users", isAdmin, async (req: Request, res: Response) => {
+    try {
+      const users = await storage.getAllUsers();
+      // Don't send passwords to the client
+      const safeUsers = users.map(user => ({
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        role: user.role
+      }));
+      return res.json(safeUsers);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      return res.status(500).json({ message: "Failed to fetch users" });
+    }
+  });
+  
+  apiRouter.delete("/users/:id", isAdmin, async (req: Request & { user?: any }, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid user ID" });
+      }
+      
+      // Check if user exists
+      const user = await storage.getUser(id);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Don't allow admin to delete themselves
+      if (req.user && user.id === req.user.id) {
+        return res.status(400).json({ message: "Cannot delete your own account" });
+      }
+      
+      const success = await storage.deleteUser(id);
+      if (!success) {
+        return res.status(500).json({ message: "Failed to delete user" });
+      }
+      
+      return res.status(200).json({ message: "User deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      return res.status(500).json({ message: "Failed to delete user" });
     }
   });
 

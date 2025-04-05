@@ -8,7 +8,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
-import { LogOut, Menu, User as UserIcon } from "lucide-react";
+import { LogOut, Menu, User as UserIcon, Mail } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useLocation } from "wouter";
 
@@ -52,8 +52,12 @@ export default function Header({ sidebarOpen, setSidebarOpen }: HeaderProps) {
           </Button>
         </div>
 
-        <div className="md:hidden flex-1 text-center">
+        <div className="md:flex flex-1 items-center justify-center">
           <h1 className="text-lg font-medium text-gray-800">StockManager</h1>
+          <div className="hidden md:flex items-center ml-6 text-gray-600">
+            <Mail className="h-4 w-4 mr-2" />
+            <span className="text-sm">namarnadh.9@gmail.com</span>
+          </div>
         </div>
 
         <div className="flex items-center">
