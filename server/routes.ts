@@ -7,12 +7,16 @@ import {
   StockStatus
 } from "@shared/schema";
 import { z } from "zod";
+import { setupAuth, isAuthenticated, isAdmin } from "./auth";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Set up authentication
+  setupAuth(app);
+  
   // API Routes
   const apiRouter = express.Router();
 
-  // Products routes
+  // Products routes - view is public
   apiRouter.get("/products", async (req: Request, res: Response) => {
     try {
       const products = await storage.getAllProducts();
@@ -42,7 +46,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  apiRouter.post("/products", async (req: Request, res: Response) => {
+  apiRouter.post("/products", isAdmin, async (req: Request, res: Response) => {
     try {
       const validatedData = productValidationSchema.safeParse(req.body);
       if (!validatedData.success) {
@@ -60,7 +64,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  apiRouter.put("/products/:id", async (req: Request, res: Response) => {
+  apiRouter.put("/products/:id", isAdmin, async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
       if (isNaN(id)) {
@@ -88,7 +92,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  apiRouter.delete("/products/:id", async (req: Request, res: Response) => {
+  apiRouter.delete("/products/:id", isAdmin, async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
       if (isNaN(id)) {
@@ -107,8 +111,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Transactions routes
-  apiRouter.post("/transactions", async (req: Request, res: Response) => {
+  // Transactions routes - requires authentication
+  apiRouter.post("/transactions", isAuthenticated, async (req: Request, res: Response) => {
     try {
       const validatedData = insertTransactionSchema.safeParse(req.body);
       if (!validatedData.success) {
@@ -126,8 +130,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Stock overview route
-  apiRouter.get("/stock", async (req: Request, res: Response) => {
+  // Stock overview route - requires authentication
+  apiRouter.get("/stock", isAuthenticated, async (req: Request, res: Response) => {
     try {
       const overview = await storage.getStockOverview();
       return res.json(overview);
@@ -137,8 +141,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Analytics routes
-  apiRouter.get("/analytics/sales", async (req: Request, res: Response) => {
+  // Analytics routes - requires authentication
+  apiRouter.get("/analytics/sales", isAuthenticated, async (req: Request, res: Response) => {
     try {
       // Get transactions and aggregate by date
       const transactions = await storage.getAllTransactions();
@@ -176,7 +180,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  apiRouter.get("/analytics/top-products", async (req: Request, res: Response) => {
+  apiRouter.get("/analytics/top-products", isAuthenticated, async (req: Request, res: Response) => {
     try {
       const products = await storage.getAllProducts();
       

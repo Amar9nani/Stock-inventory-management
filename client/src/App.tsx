@@ -6,9 +6,12 @@ import NotFound from "@/pages/not-found";
 import Dashboard from "@/pages/Dashboard";
 import Products from "@/pages/Products";
 import Analytics from "@/pages/Analytics";
+import AuthPage from "@/pages/auth-page";
 import Sidebar from "@/components/layout/Sidebar";
 import Header from "@/components/layout/Header";
 import { useState } from "react";
+import { AuthProvider } from "@/hooks/use-auth";
+import { ProtectedRoute } from "@/lib/protected-route";
 
 function AppLayout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -27,28 +30,25 @@ function AppLayout({ children }: { children: React.ReactNode }) {
 }
 
 function Router() {
-  const [location] = useLocation();
-
   return (
     <Switch>
-      <Route path="/">
+      <ProtectedRoute path="/" component={() => (
         <AppLayout>
           <Dashboard />
         </AppLayout>
-      </Route>
-      <Route path="/products">
+      )} />
+      <ProtectedRoute path="/products" component={() => (
         <AppLayout>
           <Products />
         </AppLayout>
-      </Route>
-      <Route path="/analytics">
+      )} />
+      <ProtectedRoute path="/analytics" component={() => (
         <AppLayout>
           <Analytics />
         </AppLayout>
-      </Route>
-      <Route>
-        <NotFound />
-      </Route>
+      )} />
+      <Route path="/auth" component={AuthPage} />
+      <Route component={NotFound} />
     </Switch>
   );
 }
@@ -56,8 +56,10 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <Router />
-      <Toaster />
+      <AuthProvider>
+        <Router />
+        <Toaster />
+      </AuthProvider>
     </QueryClientProvider>
   );
 }
