@@ -25,8 +25,11 @@ const getApiUrl = (endpoint: string): string => {
     return endpoint;
   }
   
-  // For Vercel production, we can use relative URLs as routes are handled by Vercel's rewrites
-  // as defined in vercel.json. This works across domains and environments.
+  // Add DEBUG logging to help diagnose issues
+  console.log(`Environment: ${import.meta.env.MODE || 'unknown'}`);
+  
+  // For Vercel deployment, we use relative URLs since API is served from same domain
+  // via Vercel's rewrites in vercel.json
   return endpoint;
 };
 
