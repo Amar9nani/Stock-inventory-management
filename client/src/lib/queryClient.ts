@@ -7,12 +7,26 @@ async function throwIfResNotOk(res: Response) {
   }
 }
 
+// Helper to determine if we need to use a full URL with hostname in production
+const getApiUrl = (endpoint: string): string => {
+  // If already a full URL, return as is
+  if (endpoint.startsWith('http')) {
+    return endpoint;
+  }
+  
+  // In production (like Vercel), use the relative URL directly
+  // The Vercel config handles routing both API and frontend from the same domain
+  return endpoint;
+};
+
 export async function apiRequest(
   method: string,
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
-  const res = await fetch(url, {
+  const apiUrl = getApiUrl(url);
+  
+  const res = await fetch(apiUrl, {
     method,
     headers: data ? { "Content-Type": "application/json" } : {},
     body: data ? JSON.stringify(data) : undefined,
@@ -29,7 +43,8 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
-    const res = await fetch(queryKey[0] as string, {
+    const apiUrl = getApiUrl(queryKey[0] as string);
+    const res = await fetch(apiUrl, {
       credentials: "include",
     });
 
