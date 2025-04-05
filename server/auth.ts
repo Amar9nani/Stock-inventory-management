@@ -30,12 +30,15 @@ export function setupAuth(app: Express) {
   });
 
   const sessionSettings: session.SessionOptions = {
-    secret: "supermarket-stock-manager-secret",
+    secret: process.env.SESSION_SECRET || "supermarket-stock-manager-secret",
     resave: false,
     saveUninitialized: false,
     store: sessionStore,
     cookie: {
       maxAge: 24 * 60 * 60 * 1000, // 24 hours
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
     }
   };
 

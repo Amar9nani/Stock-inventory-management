@@ -15,6 +15,7 @@ app.use(urlencoded({ extended: true }));
 
 // Required for Express session
 process.env.SESSION_SECRET = process.env.SESSION_SECRET || 'supermarket-stock-manager-secret';
+process.env.NODE_ENV = process.env.NODE_ENV || 'production'; // Ensure proper environment for Vercel
 
 // Import server files using require syntax
 let storage, auth, routes;

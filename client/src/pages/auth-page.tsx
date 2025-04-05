@@ -50,12 +50,22 @@ export default function AuthPage() {
     },
   });
   
-  const onLoginSubmit = (data: LoginFormValues) => {
-    loginMutation.mutate(data);
+  const onLoginSubmit = async (data: LoginFormValues) => {
+    try {
+      console.log("Login submission:", data);
+      loginMutation.mutate(data);
+    } catch (error) {
+      console.error("Login error in form submission:", error);
+    }
   };
   
-  const onRegisterSubmit = (data: RegisterFormValues) => {
-    registerMutation.mutate(data);
+  const onRegisterSubmit = async (data: RegisterFormValues) => {
+    try {
+      console.log("Register submission:", data);
+      registerMutation.mutate(data);
+    } catch (error) {
+      console.error("Registration error in form submission:", error);
+    }
   };
   
   // If already logged in, redirect to home
@@ -125,6 +135,12 @@ export default function AuthPage() {
                         "Login"
                       )}
                     </Button>
+                    
+                    <div className="text-xs text-muted-foreground mt-2 p-2 border rounded bg-slate-50">
+                      <p className="font-medium">Admin credentials:</p>
+                      <p>Username: <span className="font-medium">Amarnadh</span></p>
+                      <p>Password: <span className="font-medium">Amar.nadi@2004</span></p>
+                    </div>
                   </form>
                 </Form>
               </TabsContent>

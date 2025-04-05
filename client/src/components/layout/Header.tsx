@@ -82,7 +82,7 @@ export default function Header({ sidebarOpen, setSidebarOpen }: HeaderProps) {
               <DropdownMenuItem>
                 <UserIcon className="mr-2 h-4 w-4" />
                 <span>{user?.username}</span>
-                {isAdmin && <span className="ml-2 text-xs bg-primary/20 text-primary font-semibold rounded px-2 py-0.5">Admin</span>}
+                {isAdmin && <span className="ml-2 text-xs bg-primary/20 text-primary font-semibold rounded-full px-2 py-0.5">Admin</span>}
               </DropdownMenuItem>
               
               {user?.email && (
