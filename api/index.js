@@ -2,9 +2,10 @@
 const express = require('express');
 const { createServer } = require('http');
 const { exec } = require('child_process');
-const { join } = require('path');
+const path = require('path');
 const cors = require('cors');
 const { json, urlencoded } = require('body-parser');
+const fs = require('fs');
 
 const app = express();
 
@@ -57,6 +58,28 @@ try {
 app.get('/api/health', (req, res) => {
   res.status(200).json({ status: 'ok' });
 });
+
+// Handle static files in production mode
+if (process.env.NODE_ENV === 'production') {
+  // Determine the static files path for Vercel deployment
+  const staticPath = path.join(process.cwd(), 'dist/public');
+  
+  // Check if the directory exists
+  if (fs.existsSync(staticPath)) {
+    console.log('Serving static files from:', staticPath);
+    app.use(express.static(staticPath));
+    
+    // Serve index.html for all other routes (SPA fallback)
+    app.get('*', (req, res) => {
+      // Only handle non-API routes
+      if (!req.path.startsWith('/api/')) {
+        res.sendFile(path.join(staticPath, 'index.html'));
+      }
+    });
+  } else {
+    console.warn('Static directory not found:', staticPath);
+  }
+}
 
 // For Vercel serverless function
 module.exports = app;

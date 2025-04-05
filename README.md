@@ -191,3 +191,57 @@ For support or inquiries, please contact:
 ## License
 
 This project is licensed under the MIT License.
+
+## Vercel Deployment Troubleshooting
+
+If you encounter issues during Vercel deployment, try the following steps:
+
+### Error: "No Output Directory named 'dist' found after the Build completed"
+
+This error occurs when Vercel can't find the build output. To fix:
+
+1. Ensure `vercel.json` is properly configured with:
+   ```json
+   {
+     "version": 2,
+     "buildCommand": "./build.sh",
+     "outputDirectory": "dist/public",
+     ...
+   }
+   ```
+
+2. Make sure `build.sh` has execute permissions:
+   ```bash
+   chmod +x build.sh
+   ```
+
+3. Check that your build script is creating files in the correct location:
+   - Frontend files should be in `dist/public`
+   - API files should be in `api/index.js`
+
+4. If using GitHub deployment, ensure these files are committed:
+   - vercel.json
+   - build.sh
+   - api/index.js
+
+### Session/Cookie Issues
+
+If authentication isn't working in production:
+
+1. Set the necessary environment variables in Vercel:
+   - SESSION_SECRET
+   - NODE_ENV=production
+
+2. If using a separate domain for API, ensure CORS is properly configured.
+
+## Vercel Deployment Steps
+
+1. Connect your GitHub repository to Vercel
+2. Configure the following settings:
+   - Framework Preset: Other
+   - Build Command: `./build.sh`
+   - Output Directory: `dist/public`
+3. Add environment variables:
+   - SESSION_SECRET: [your-secret-key]
+4. Deploy the project
+

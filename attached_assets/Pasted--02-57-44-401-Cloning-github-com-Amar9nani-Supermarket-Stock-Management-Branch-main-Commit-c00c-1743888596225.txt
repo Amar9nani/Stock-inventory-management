@@ -1,0 +1,39 @@
+[02:57:44.401] Cloning github.com/Amar9nani/Supermarket-Stock-Management (Branch: main, Commit: c00cd24)
+[02:57:44.563] Previous build caches not available
+[02:57:44.660] Cloning completed: 258.000ms
+[02:57:44.865] Running build in Washington, D.C., USA (East) – iad1
+[02:57:45.040] Running "vercel build"
+[02:57:45.432] Vercel CLI 41.4.1
+[02:57:46.161] Installing dependencies...
+[02:57:50.545] npm warn deprecated @esbuild-kit/core-utils@3.3.2: Merged into tsx: https://tsx.is
+[02:57:50.557] npm warn deprecated @esbuild-kit/esm-loader@2.6.5: Merged into tsx: https://tsx.is
+[02:57:55.534] 
+[02:57:55.535] added 494 packages in 9s
+[02:57:55.535] 
+[02:57:55.535] 60 packages are looking for funding
+[02:57:55.536]   run `npm fund` for details
+[02:57:55.694] 
+[02:57:55.694] > rest-express@1.0.0 build
+[02:57:55.695] > vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist
+[02:57:55.695] 
+[02:57:56.066] [36mvite v5.4.14 [32mbuilding for production...[36m[39m
+[02:57:56.120] transforming...
+[02:58:03.748] [32m✓[39m 2955 modules transformed.
+[02:58:04.450] rendering chunks...
+[02:58:04.464] computing gzip size...
+[02:58:04.492] [2m../dist/public/[22m[32mindex.html                 [39m[1m[2m  1.80 kB[22m[1m[22m[2m │ gzip:   0.74 kB[22m
+[02:58:04.492] [2m../dist/public/[22m[2massets/[22m[35mindex-CIRnOkwC.css  [39m[1m[2m 61.13 kB[22m[1m[22m[2m │ gzip:  10.81 kB[22m
+[02:58:04.492] [2m../dist/public/[22m[2massets/[22m[36mindex-BUSdeCdJ.js   [39m[1m[33m970.53 kB[39m[22m[2m │ gzip: 277.74 kB[22m
+[02:58:04.493] [33m
+[02:58:04.493] (!) Some chunks are larger than 500 kB after minification. Consider:
+[02:58:04.493] - Using dynamic import() to code-split the application
+[02:58:04.493] - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+[02:58:04.493] - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.[39m
+[02:58:04.496] [32m✓ built in 8.41s[39m
+[02:58:04.547] 
+[02:58:04.548]   dist/index.js  23.8kb
+[02:58:04.548] 
+[02:58:04.548] ⚡ Done in 6ms
+[02:58:04.565] Error: No Output Directory named "dist" found after the Build completed. You can configure the Output Directory in your Project Settings.
+[02:58:04.565] Learn More: https://vercel.link/missing-public-directory
+[02:58:04.866] 
