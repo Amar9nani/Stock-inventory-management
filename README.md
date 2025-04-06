@@ -30,7 +30,6 @@ A comprehensive web application for managing supermarket inventory, tracking sto
   - Role management
 
 
-
 ## Technology Stack
 
 - **Frontend**
@@ -70,26 +69,6 @@ A comprehensive web application for managing supermarket inventory, tracking sto
 ### User Roles
 - **Admin**: Full access to all features including user management
 - **User**: Access to products, transactions, and analytics, but cannot manage users
-
-## Database Structure
-
-The application uses a structured database with the following main collections:
-
-1. **Products**
-   - id: Unique identifier
-   - name: Product name
-   - category: Product category (Dairy, Bakery, Produce, etc.)
-   - price: Price in Indian Rupees (₹)
-   - stockQuantity: Current inventory level
-   - itemsSold: Total number of units sold
-
-2. **Transactions**
-   - id: Unique identifier
-   - productId: Reference to the product
-   - quantity: Number of units in the transaction
-   - totalPrice: Transaction amount in Indian Rupees (₹)
-   - type: Transaction type (sale, restock, return)
-   - date: Date of transaction
 
 
 
