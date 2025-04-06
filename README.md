@@ -4,11 +4,6 @@ A comprehensive web application for managing supermarket inventory, tracking sto
 
 ## Features
 
-- **User Authentication**
-  - Secure login and registration system
-  - Role-based access control (Admin and User roles)
-  - Session management with Express session
-
 - **Product Management**
   - Add, edit, and delete products
   - Filter and sort products by category, stock status, and name
@@ -34,10 +29,7 @@ A comprehensive web application for managing supermarket inventory, tracking sto
   - Delete user accounts
   - Role management
 
-- **Responsive Design**
-  - Mobile-friendly interface
-  - Adapts to tablets and desktops
-  - Modern UI with shadcn components
+
 
 ## Technology Stack
 
@@ -99,64 +91,7 @@ The application uses a structured database with the following main collections:
    - type: Transaction type (sale, restock, return)
    - date: Date of transaction
 
-3. **Users**
-   - id: Unique identifier
-   - username: User's username
-   - password: Hashed password using bcrypt
-   - email: User's email address
-   - role: User role (admin or user)
 
-## API Endpoints
-
-### Authentication
-- POST /api/register - Register a new user
-- POST /api/login - Login user
-- POST /api/logout - Logout user
-- GET /api/user - Get current user information
-
-### Products
-- GET /api/products - Get all products
-- GET /api/products/:id - Get specific product
-- POST /api/products - Create new product (Admin only)
-- PUT /api/products/:id - Update product (Admin only)
-- DELETE /api/products/:id - Delete product (Admin only)
-
-### Transactions
-- GET /api/transactions - Get all transactions
-- POST /api/transactions - Create new transaction
-
-### Analytics
-- GET /api/stock - Get stock overview
-- GET /api/analytics/sales - Get sales data
-- GET /api/analytics/top-products - Get top-selling products
-
-### User Management
-- GET /api/users - Get all users (Admin only)
-- DELETE /api/users/:id - Delete user (Admin only)
-
-## Responsive Design
-
-The application is fully responsive with adaptive layouts for:
-- Mobile devices (< 640px)
-- Tablets (640px - 1024px)
-- Desktops (> 1024px)
-
-## Deployment
-
-### Full-Stack Deployment to Vercel
-1. Create a Vercel account at [vercel.com](https://vercel.com)
-2. Connect your GitHub repository
-3. Configure environment variables:
-   - SESSION_SECRET=your-secure-session-secret
-   - NODE_ENV=production
-4. Configure project settings:
-   - In the Vercel dashboard, select your project
-   - Go to Settings → General → Build & Development Settings
-   - Set Framework Preset to "Vite"
-   - Build Command: `npm run build`
-   - Output Directory: `client/dist`
-5. Deploy the project
-6. Once deployed, Vercel will provide a production URL that hosts both your frontend and API
 
 ### Alternative: Split Deployment
 
@@ -178,16 +113,3 @@ The application is fully responsive with adaptive layouts for:
    - CORS_ORIGIN=https://your-frontend-vercel-url.vercel.app
 5. Deploy the service
 
-### Important Deployment Notes
-- The project includes a `vercel.json` configuration file that sets up routing for the combined frontend/backend deployment
-- For Vercel deployment, cookies and authentication are configured to work across serverless functions
-- CORS settings are automatically configured to work with Vercel's domain structure
-
-## Contact
-
-For support or inquiries, please contact:
-- Email: namarnadh.9@gmail.com
-
-## License
-
-This project is licensed under the MIT License.
