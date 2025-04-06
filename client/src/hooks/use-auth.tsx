@@ -1,11 +1,11 @@
-import { createContext, ReactNode, useContext, useEffect } from "react";
+import { createContext, ReactNode, useContext } from "react";
 import {
   useQuery,
   useMutation,
   UseMutationResult,
 } from "@tanstack/react-query";
 import { InsertUser, User } from "@shared/schema";
-import { getQueryFn, apiRequest, queryClient, setAuthToken, getAuthToken } from "@/lib/queryClient";
+import { getQueryFn, apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
 type AuthContextType = {
@@ -31,15 +31,6 @@ export const AuthContext = createContext<AuthContextType>({
 });
 export function AuthProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
-  
-  // Initialize auth token from localStorage when component mounts
-  useEffect(() => {
-    const token = localStorage.getItem('authToken');
-    if (token) {
-      setAuthToken(token);
-    }
-  }, []);
-  
   const {
     data: user,
     error,
@@ -53,14 +44,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     mutationFn: async (credentials: LoginData) => {
       try {
         const res = await apiRequest("POST", "/api/login", credentials);
-        const data = await res.json();
-        
-        // Store the JWT token
-        if (data.token) {
-          setAuthToken(data.token);
-        }
-        
-        return data.user;
+        const userData = await res.json();
+        return userData;
       } catch (error) {
         console.error("Login error:", error);
         throw error;
@@ -86,14 +71,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const registerMutation = useMutation({
     mutationFn: async (credentials: RegisterData) => {
       const res = await apiRequest("POST", "/api/register", credentials);
-      const data = await res.json();
-      
-      // Store the JWT token
-      if (data.token) {
-        setAuthToken(data.token);
-      }
-      
-      return data.user;
+      return await res.json();
     },
     onSuccess: (user: User) => {
       queryClient.setQueryData(["/api/user"], user);
@@ -114,8 +92,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logoutMutation = useMutation({
     mutationFn: async () => {
       await apiRequest("POST", "/api/logout");
-      // Clear the JWT token
-      setAuthToken(null);
     },
     onSuccess: () => {
       queryClient.setQueryData(["/api/user"], null);
@@ -126,10 +102,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
     },
     onError: (error: Error) => {
-      // Still clear token even if there's an API error
-      setAuthToken(null);
-      queryClient.setQueryData(["/api/user"], null);
-      
       toast({
         title: "Logout failed",
         description: error.message,

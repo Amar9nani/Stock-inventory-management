@@ -1,26 +1,5 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 
-// Store token in memory
-let authToken: string | null = null;
-
-export function setAuthToken(token: string | null) {
-  authToken = token;
-  // Also store in localStorage for persistence across page refreshes
-  if (token) {
-    localStorage.setItem('authToken', token);
-  } else {
-    localStorage.removeItem('authToken');
-  }
-}
-
-export function getAuthToken(): string | null {
-  // If token is not in memory, try to get it from localStorage
-  if (!authToken) {
-    authToken = localStorage.getItem('authToken');
-  }
-  return authToken;
-}
-
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
     let errorText = res.statusText;
@@ -46,11 +25,8 @@ const getApiUrl = (endpoint: string): string => {
     return endpoint;
   }
   
-  // Add DEBUG logging to help diagnose issues
-  console.log(`Environment: ${import.meta.env.MODE || 'unknown'}`);
-  
-  // For Vercel deployment, we use relative URLs since API is served from same domain
-  // via Vercel's rewrites in vercel.json
+  // For Vercel production, we can use relative URLs as routes are handled by Vercel's rewrites
+  // as defined in vercel.json. This works across domains and environments.
   return endpoint;
 };
 
@@ -67,21 +43,10 @@ export async function apiRequest(
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
   
-  // Prepare headers with content type
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json"
-  };
-  
-  // Add auth token if available
-  const token = getAuthToken();
-  if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
-  }
-  
   try {
     const res = await fetch(apiUrl, {
       method,
-      headers,
+      headers: data ? { "Content-Type": "application/json" } : {},
       body: data ? JSON.stringify(data) : undefined,
       credentials: "include",
       signal: controller.signal
@@ -116,20 +81,10 @@ export const getQueryFn: <T>(options: {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
     
-    // Prepare headers
-    const headers: Record<string, string> = {};
-    
-    // Add auth token if available
-    const token = getAuthToken();
-    if (token) {
-      headers["Authorization"] = `Bearer ${token}`;
-    }
-    
     try {
       const res = await fetch(apiUrl, {
         credentials: "include",
-        signal: controller.signal,
-        headers
+        signal: controller.signal
       });
       
       clearTimeout(timeoutId);
