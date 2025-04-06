@@ -1,17 +1,19 @@
-// Serverless function for Vercel
+// Simplified serverless function for Vercel
 const express = require('express');
-const { createServer } = require('http');
 const path = require('path');
 const cors = require('cors');
-const session = require('express-session');
-const passport = require('passport');
-const { Strategy: LocalStrategy } = require('passport-local');
 const { json, urlencoded } = require('body-parser');
 const crypto = require('crypto');
-const fs = require('fs');
-const MemoryStore = require('memorystore')(session);
+const jwt = require('jsonwebtoken');
+const cookieParser = require('cookie-parser');
 
+// Initialize express
 const app = express();
+
+// Global error handler for uncaught exceptions
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught Exception:', err);
+});
 
 // Custom error handler middleware
 app.use((req, res, next) => {
@@ -23,29 +25,11 @@ app.use((req, res, next) => {
   }
 });
 
-// CORS configuration
+// CORS configuration for Vercel deployment
 const corsOptions = {
   origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps, curl, etc)
-    if (!origin) return callback(null, true);
-    
-    // Check if origin is allowed
-    const allowedOrigins = [
-      'http://localhost:3000',
-      'http://localhost:5000',
-      'https://supermarket-stock-management.vercel.app'
-    ];
-    
-    // Add Vercel deployment URL if available
-    if (process.env.VERCEL_URL) {
-      allowedOrigins.push(`https://${process.env.VERCEL_URL}`);
-    }
-    
-    if (allowedOrigins.indexOf(origin) !== -1 || origin.endsWith('.vercel.app')) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
+    // Allow all origins for Vercel deployment
+    callback(null, true);
   },
   credentials: true
 };
@@ -53,46 +37,13 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(json());
 app.use(urlencoded({ extended: true }));
+app.use(cookieParser());
 
 // Handle OPTIONS requests for CORS preflight
-app.options('*', cors(corsOptions)); 
+app.options('*', cors(corsOptions));
 
-// Add cookie parser middleware
-app.use(require('cookie-parser')());
-
-// Required for Express session
-process.env.SESSION_SECRET = process.env.SESSION_SECRET || 'supermarket-stock-manager-secret';
-process.env.NODE_ENV = process.env.NODE_ENV || 'production'; // Ensure proper environment for Vercel
-
-// Setup session
-const sessionConfig = {
-  secret: process.env.SESSION_SECRET,
-  resave: false,
-  saveUninitialized: false,
-  store: new MemoryStore({
-    checkPeriod: 86400000 // Prune expired entries every 24h
-  }),
-  cookie: {
-    secure: process.env.NODE_ENV === 'production',
-    httpOnly: true,
-    maxAge: 24 * 60 * 60 * 1000, // 24 hours
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-    // Allow cookies from any domain in production to fix cross-domain issues
-    domain: process.env.NODE_ENV === 'production' ? undefined : undefined
-  }
-};
-
-// Debug session setup
-console.log('Session configuration:', {
-  nodeEnv: process.env.NODE_ENV,
-  cookieSecure: sessionConfig.cookie.secure,
-  cookieSameSite: sessionConfig.cookie.sameSite,
-  hasSecret: !!process.env.SESSION_SECRET
-});
-
-app.use(session(sessionConfig));
-app.use(passport.initialize());
-app.use(passport.session());
+// JWT Secret
+const JWT_SECRET = process.env.JWT_SECRET || 'supermarket-stock-manager-secret';
 
 // In-memory storage for serverless environment
 const users = [
@@ -122,32 +73,27 @@ const products = [
     description: 'Fresh milk',
     threshold: 20
   },
-  // Add more products as needed
+  {
+    id: 2,
+    name: 'Bread',
+    price: 25.00,
+    category: 'Bakery',
+    quantity: 50,
+    description: 'Whole wheat bread',
+    threshold: 10
+  },
+  {
+    id: 3,
+    name: 'Eggs',
+    price: 60.00,
+    category: 'Dairy & Eggs',
+    quantity: 200,
+    description: 'Free-range eggs (dozen)',
+    threshold: 30
+  }
 ];
 
 const transactions = [];
-
-// Passport configuration
-passport.use(new LocalStrategy(async (username, password, done) => {
-  try {
-    const user = users.find(u => u.username === username);
-    if (!user || !comparePasswords(password, user.password)) {
-      return done(null, false, { message: 'Incorrect username or password' });
-    }
-    return done(null, user);
-  } catch (error) {
-    return done(error);
-  }
-}));
-
-passport.serializeUser((user, done) => {
-  done(null, user.id);
-});
-
-passport.deserializeUser((id, done) => {
-  const user = users.find(u => u.id === id);
-  done(null, user);
-});
 
 // Password hashing functions
 function hashPassword(password) {
@@ -162,16 +108,33 @@ function comparePasswords(supplied, stored) {
   return hash === suppliedHash;
 }
 
-// Authentication middleware
-function isAuthenticated(req, res, next) {
-  if (req.isAuthenticated()) {
-    return next();
+// JWT Authentication
+function generateToken(user) {
+  const { password, ...userWithoutPassword } = user;
+  return jwt.sign(userWithoutPassword, JWT_SECRET, { expiresIn: '24h' });
+}
+
+function verifyToken(req, res, next) {
+  // Get token from cookies, authorization header, or query parameter
+  const token = req.cookies.token || 
+                (req.headers.authorization && req.headers.authorization.split(' ')[1]) || 
+                req.query.token;
+  
+  if (!token) {
+    return res.status(401).json({ message: 'Authentication required' });
   }
-  res.status(401).json({ message: 'Not authenticated' });
+  
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    req.user = decoded;
+    next();
+  } catch (error) {
+    return res.status(401).json({ message: 'Invalid or expired token' });
+  }
 }
 
 function isAdmin(req, res, next) {
-  if (req.isAuthenticated() && req.user.role === 'admin') {
+  if (req.user && req.user.role === 'admin') {
     return next();
   }
   res.status(403).json({ message: 'Admin access required' });
@@ -181,57 +144,81 @@ function isAdmin(req, res, next) {
 const apiRouter = express.Router();
 
 // Authentication routes
-apiRouter.post('/login', (req, res, next) => {
-  passport.authenticate('local', (err, user, info) => {
-    if (err) return next(err);
-    if (!user) return res.status(401).json({ message: 'Invalid credentials' });
+apiRouter.post('/login', (req, res) => {
+  try {
+    const { username, password } = req.body;
     
-    req.login(user, (err) => {
-      if (err) return next(err);
-      return res.json(user);
+    const user = users.find(u => u.username === username);
+    if (!user || !comparePasswords(password, user.password)) {
+      return res.status(401).json({ message: 'Invalid credentials' });
+    }
+    
+    // Generate JWT token
+    const token = generateToken(user);
+    
+    // Set token as HTTP-only cookie
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+      sameSite: 'none'
     });
-  })(req, res, next);
+    
+    // Don't send password to client
+    const { password: _, ...userWithoutPassword } = user;
+    res.status(200).json({ user: userWithoutPassword, token });
+  } catch (error) {
+    console.error('Login error:', error);
+    res.status(500).json({ message: 'Server error during login', error: error.message });
+  }
 });
 
 apiRouter.post('/logout', (req, res) => {
-  req.logout(function(err) {
-    if (err) return res.status(500).json({ message: 'Logout failed', error: err.message });
-    res.status(200).json({ message: 'Logged out successfully' });
-  });
+  res.clearCookie('token');
+  res.status(200).json({ message: 'Logged out successfully' });
 });
 
 apiRouter.post('/register', (req, res) => {
-  const { username, password, email } = req.body;
-  
-  // Check if username already exists
-  if (users.find(u => u.username === username)) {
-    return res.status(400).json({ message: 'Username already exists' });
+  try {
+    const { username, password, email } = req.body;
+    
+    // Check if username already exists
+    if (users.find(u => u.username === username)) {
+      return res.status(400).json({ message: 'Username already exists' });
+    }
+    
+    const newUser = {
+      id: users.length + 1,
+      username,
+      password: hashPassword(password),
+      email,
+      role: 'user'
+    };
+    
+    users.push(newUser);
+    
+    // Generate token
+    const token = generateToken(newUser);
+    
+    // Set token as HTTP-only cookie
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+      sameSite: 'none'
+    });
+    
+    // Don't send password to client
+    const { password: _, ...userWithoutPassword } = newUser;
+    res.status(201).json({ user: userWithoutPassword, token });
+  } catch (error) {
+    console.error('Registration error:', error);
+    res.status(500).json({ message: 'Server error during registration', error: error.message });
   }
-  
-  const newUser = {
-    id: users.length + 1,
-    username,
-    password: hashPassword(password),
-    email,
-    role: 'user'
-  };
-  
-  users.push(newUser);
-  
-  req.login(newUser, (err) => {
-    if (err) return res.status(500).json({ message: 'Login failed after registration', error: err.message });
-    return res.status(201).json(newUser);
-  });
 });
 
-apiRouter.get('/user', (req, res) => {
-  if (!req.isAuthenticated()) {
-    return res.status(401).json({ message: 'Not authenticated' });
-  }
-  
-  // Don't send password to client
-  const { password, ...userWithoutPassword } = req.user;
-  res.json(userWithoutPassword);
+apiRouter.get('/user', verifyToken, (req, res) => {
+  res.json(req.user);
 });
 
 // Product routes
@@ -250,7 +237,7 @@ apiRouter.get('/products/:id', (req, res) => {
   res.json(product);
 });
 
-apiRouter.post('/products', isAdmin, (req, res) => {
+apiRouter.post('/products', verifyToken, isAdmin, (req, res) => {
   const { name, price, category, quantity, description, threshold } = req.body;
   
   const newProduct = {
@@ -267,7 +254,7 @@ apiRouter.post('/products', isAdmin, (req, res) => {
   res.status(201).json(newProduct);
 });
 
-apiRouter.put('/products/:id', isAdmin, (req, res) => {
+apiRouter.put('/products/:id', verifyToken, isAdmin, (req, res) => {
   const id = parseInt(req.params.id);
   const productIndex = products.findIndex(p => p.id === id);
   
@@ -288,7 +275,7 @@ apiRouter.put('/products/:id', isAdmin, (req, res) => {
   res.json(updatedProduct);
 });
 
-apiRouter.delete('/products/:id', isAdmin, (req, res) => {
+apiRouter.delete('/products/:id', verifyToken, isAdmin, (req, res) => {
   const id = parseInt(req.params.id);
   const productIndex = products.findIndex(p => p.id === id);
   
@@ -301,7 +288,7 @@ apiRouter.delete('/products/:id', isAdmin, (req, res) => {
 });
 
 // Transaction routes
-apiRouter.post('/transactions', isAuthenticated, (req, res) => {
+apiRouter.post('/transactions', verifyToken, (req, res) => {
   const { productId, quantity, type } = req.body;
   
   // Find product
@@ -344,12 +331,12 @@ apiRouter.post('/transactions', isAuthenticated, (req, res) => {
   res.status(201).json(newTransaction);
 });
 
-apiRouter.get('/transactions', isAuthenticated, (req, res) => {
+apiRouter.get('/transactions', verifyToken, (req, res) => {
   res.json(transactions);
 });
 
 // Analytics routes
-apiRouter.get('/stock', isAuthenticated, (req, res) => {
+apiRouter.get('/stock', verifyToken, (req, res) => {
   // Calculate stock overview
   const totalProducts = products.length;
   const lowStockCount = products.filter(p => p.quantity <= p.threshold).length;
@@ -369,7 +356,7 @@ apiRouter.get('/stock', isAuthenticated, (req, res) => {
   });
 });
 
-apiRouter.get('/analytics/sales', isAuthenticated, (req, res) => {
+apiRouter.get('/analytics/sales', verifyToken, (req, res) => {
   // Get sales data for the last 7 days
   const now = new Date();
   const sevenDaysAgo = new Date(now.setDate(now.getDate() - 7));
@@ -397,7 +384,7 @@ apiRouter.get('/analytics/sales', isAuthenticated, (req, res) => {
   res.json(Object.values(salesByDay));
 });
 
-apiRouter.get('/analytics/top-products', isAuthenticated, (req, res) => {
+apiRouter.get('/analytics/top-products', verifyToken, (req, res) => {
   // Get top 5 selling products
   const productSales = {};
   
@@ -431,13 +418,13 @@ apiRouter.get('/analytics/top-products', isAuthenticated, (req, res) => {
 });
 
 // User routes
-apiRouter.get('/users', isAdmin, (req, res) => {
+apiRouter.get('/users', verifyToken, isAdmin, (req, res) => {
   // Don't send passwords
   const usersWithoutPasswords = users.map(({ password, ...user }) => user);
   res.json(usersWithoutPasswords);
 });
 
-apiRouter.delete('/users/:id', isAdmin, (req, res) => {
+apiRouter.delete('/users/:id', verifyToken, isAdmin, (req, res) => {
   const id = parseInt(req.params.id);
   
   // Don't allow deleting yourself
@@ -455,9 +442,6 @@ apiRouter.delete('/users/:id', isAdmin, (req, res) => {
   res.status(200).json({ message: 'User deleted successfully' });
 });
 
-// Register API router
-app.use('/api', apiRouter);
-
 // Health check endpoints
 app.get('/api/health', (req, res) => {
   res.status(200).json({ 
@@ -469,47 +453,8 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// Debug endpoint for deployment testing
-app.get('/api/debug', (req, res) => {
-  const debugInfo = {
-    timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || 'development',
-    headers: req.headers,
-    cookies: req.cookies || {},
-    session: req.session ? 'Session exists' : 'No session',
-    authenticated: req.isAuthenticated ? req.isAuthenticated() : false,
-    vercel: {
-      isVercel: !!process.env.VERCEL,
-      vercelUrl: process.env.VERCEL_URL || 'N/A',
-      region: process.env.VERCEL_REGION || 'N/A'
-    },
-    staticPath: fs.existsSync(path.join(process.cwd(), 'dist/public')) ? 'Exists' : 'Missing'
-  };
-  
-  res.status(200).json(debugInfo);
-});
-
-// Handle static files in production mode
-if (process.env.NODE_ENV === 'production') {
-  // Determine the static files path for Vercel deployment
-  const staticPath = path.join(process.cwd(), 'dist/public');
-  
-  // Check if the directory exists
-  if (fs.existsSync(staticPath)) {
-    console.log('Serving static files from:', staticPath);
-    app.use(express.static(staticPath));
-    
-    // Serve index.html for all other routes (SPA fallback)
-    app.get('*', (req, res) => {
-      // Only handle non-API routes
-      if (!req.path.startsWith('/api/')) {
-        res.sendFile(path.join(staticPath, 'index.html'));
-      }
-    });
-  } else {
-    console.warn('Static directory not found:', staticPath);
-  }
-}
+// Register API router
+app.use('/api', apiRouter);
 
 // For Vercel serverless function
 module.exports = app;
