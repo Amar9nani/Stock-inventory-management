@@ -42,17 +42,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const loginMutation = useMutation({
     mutationFn: async (credentials: LoginData) => {
+      console.log("Login submission:", credentials);
+      
       try {
         const res = await apiRequest("POST", "/api/login", credentials);
+        
+        if (!res.ok) {
+          const errorData = await res.json().catch(() => ({ message: "Login failed" }));
+          throw new Error(errorData.message || "Login failed");
+        }
+        
         const userData = await res.json();
         return userData;
       } catch (error) {
         console.error("Login error:", error);
-        throw error;
+        throw error instanceof Error ? error : new Error("Login failed");
       }
     },
     onSuccess: (user: User) => {
       queryClient.setQueryData(["/api/user"], user);
+      // Invalidate other queries that might need refresh with new auth state
+      queryClient.invalidateQueries({queryKey: ["/api/products"]});
+      
       toast({
         title: "Login successful",
         description: `Welcome back, ${user.username}!`,
@@ -70,11 +81,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const registerMutation = useMutation({
     mutationFn: async (credentials: RegisterData) => {
-      const res = await apiRequest("POST", "/api/register", credentials);
-      return await res.json();
+      console.log("Registration submission:", { ...credentials, password: "••••••••" });
+      
+      try {
+        const res = await apiRequest("POST", "/api/register", credentials);
+        
+        if (!res.ok) {
+          const errorData = await res.json().catch(() => ({ message: "Registration failed" }));
+          throw new Error(errorData.message || "Registration failed");
+        }
+        
+        return await res.json();
+      } catch (error) {
+        console.error("Registration error:", error);
+        throw error instanceof Error ? error : new Error("Registration failed");
+      }
     },
     onSuccess: (user: User) => {
       queryClient.setQueryData(["/api/user"], user);
+      // Invalidate other queries that might need refresh with new auth state
+      queryClient.invalidateQueries({queryKey: ["/api/products"]});
+      
       toast({
         title: "Registration successful",
         description: `Welcome to Stock Manager, ${user.username}!`,

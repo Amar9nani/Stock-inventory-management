@@ -2,19 +2,39 @@ import { QueryClient, QueryFunction } from "@tanstack/react-query";
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
-    let errorText = res.statusText;
     try {
-      const text = await res.text();
-      errorText = text || res.statusText;
-      console.error("API Error Response:", {
-        status: res.status,
-        statusText: res.statusText,
-        body: text
-      });
+      // Try to parse as JSON first
+      const errorJson = await res.json().catch(() => null);
+      
+      if (errorJson) {
+        console.error("API Error Response:", {
+          status: res.status,
+          statusText: res.statusText,
+          body: JSON.stringify(errorJson)
+        });
+        
+        // Return a more user-friendly error message
+        const message = errorJson.message || errorJson.error || `${res.status}: ${res.statusText}`;
+        throw new Error(message);
+      } else {
+        // Fall back to text if not JSON
+        const text = await res.text().catch(() => res.statusText);
+        console.error("API Error Response:", {
+          status: res.status,
+          statusText: res.statusText,
+          body: text
+        });
+        throw new Error(`${res.status}: ${text || res.statusText}`);
+      }
     } catch (e) {
+      if (e instanceof Error) {
+        throw e; // Re-throw the structured error we created above
+      }
+      
+      // Last resort fallback if both JSON and text parsing fail
       console.error("Failed to parse error response:", e);
+      throw new Error(`${res.status}: ${res.statusText}`);
     }
-    throw new Error(`${res.status}: ${errorText}`);
   }
 }
 
@@ -46,10 +66,15 @@ export async function apiRequest(
   try {
     const res = await fetch(apiUrl, {
       method,
-      headers: data ? { "Content-Type": "application/json" } : {},
+      headers: {
+        ...(data ? { "Content-Type": "application/json" } : {}),
+        "Accept": "application/json",
+        "Cache-Control": "no-cache"
+      },
       body: data ? JSON.stringify(data) : undefined,
       credentials: "include",
-      signal: controller.signal
+      signal: controller.signal,
+      cache: "no-store"
     });
     
     clearTimeout(timeoutId);
@@ -83,8 +108,14 @@ export const getQueryFn: <T>(options: {
     
     try {
       const res = await fetch(apiUrl, {
+        method: "GET",
+        headers: {
+          "Accept": "application/json",
+          "Cache-Control": "no-cache"
+        },
         credentials: "include",
-        signal: controller.signal
+        signal: controller.signal,
+        cache: "no-store"
       });
       
       clearTimeout(timeoutId);
